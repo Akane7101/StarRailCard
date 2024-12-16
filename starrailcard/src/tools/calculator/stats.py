@@ -60,7 +60,7 @@ class Calculator:
             "total_score": {"count": 0, "rank": {"name": "N/A", "color": (255,255,255)}},
             "bad": []
         }
-    
+
     def get_rolls(self,rarity, stats):
         if rarity < 3:
             return 0
@@ -80,7 +80,7 @@ class Calculator:
                         max_margin = abs(value_sum - value)
                         result = i+j+k 
         return result
-    
+
     async def get_relic_score(self, chara_id, relic_json):
         result_json = {}
         try:
@@ -89,7 +89,7 @@ class Calculator:
             main_weight = 0
         main_affix_score = (relic_json.level + 1) / 16 * main_weight
         result_json["main_formula"] = f'{round((relic_json.level + 1) / 16 * 100, 1)}×{main_weight}={main_affix_score * 100}'
-        
+
         sub_affix_formulas = []
         dont_sub = []
         for sub_affix_json in relic_json.sub_affix:
@@ -104,50 +104,50 @@ class Calculator:
         return result_json,dont_sub
 
     async def start(self, hoyo):
-    if not self.data.id in self.score:
-        await self.update_score(self.data.id)
-        self.score = open_score("score")
-    if not self.data.id in self.score:
-        return self.result  # Return empty result if the ID is still not in the score
-    
-    for key in self.data.relics:
-        relic_score_json, bad = await self.get_relic_score(self.data.id, key)
-        self.result["bad"] = list(set(self.result["bad"] + bad))
-        relic_score = round(relic_score_json["score"] * 100, 1)
-        self.result["total_score"]["count"] += relic_score
-        self.result["score"][key.id] = {
-            "count": relic_score,
-            "rolls": {},
-            "rank": {
-                "name": utils.get_relic_score_text(relic_score),
-                "color": utils.get_relic_score_color(relic_score),
-            },
+        if not self.data.id in self.score:
+            await self.update_score(self.data.id)
+            self.score = open_score("score")
+        if not self.data.id in self.score:
+            return self.result  # Return empty result if the ID is still not in the score
+
+        for key in self.data.relics:
+            relic_score_json, bad = await self.get_relic_score(self.data.id, key)
+            self.result["bad"] = list(set(self.result["bad"] + bad))
+            relic_score = round(relic_score_json["score"] * 100, 1)
+            self.result["total_score"]["count"] += relic_score
+            self.result["score"][key.id] = {
+                "count": relic_score,
+                "rolls": {},
+                "rank": {
+                    "name": utils.get_relic_score_text(relic_score),
+                    "color": utils.get_relic_score_color(relic_score),
+                },
+            }
+            for sub in key.sub_affix:
+                rolls = self.get_rolls(key.rarity, sub)
+                self.result["score"][key.id]["rolls"][sub.type] = rolls
+
+        for key in self.result["score"]:
+            self.result["total_score"]["count"] += self.result["score"][key]["count"]
+
+        self.result["total_score"]["count"] = round(self.result["total_score"]["count"] / 2, 1)
+        self.result["total_score"]["rank"] = {
+            "name": utils.get_relic_full_score_text(self.result["total_score"]["count"]),
+            "color": utils.get_total_score_color(self.result["total_score"]["count"]),
         }
-        for sub in key.sub_affix:
-            rolls = self.get_rolls(key.rarity, sub)
-            self.result["score"][key.id]["rolls"][sub.type] = rolls
 
-    for key in self.result["score"]:
-        self.result["total_score"]["count"] += self.result["score"][key]["count"]
+        # Skip further updates or external calls if hoyo is True
+        if hoyo:
+            return self.result
 
-    self.result["total_score"]["count"] = round(self.result["total_score"]["count"] / 2, 1)
-    self.result["total_score"]["rank"] = {
-        "name": utils.get_relic_full_score_text(self.result["total_score"]["count"]),
-        "color": utils.get_total_score_color(self.result["total_score"]["count"]),
-    }
-
-    # Skip further updates or external calls if hoyo is True
-    if hoyo:
         return self.result
-
-    return self.result
 
 
     async def get_score(self):
         return self.score
-    
+
     async def update_score(self, charter_id = None):
-        
+
         for key in _PATH_FILE_NAME:
             if key == "score":
                 data = await get_score(_LINK_SCORE)
