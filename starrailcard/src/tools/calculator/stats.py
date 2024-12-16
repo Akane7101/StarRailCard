@@ -103,7 +103,7 @@ class Calculator:
 
         return result_json,dont_sub
 
-    async def start(self, hoyo):
+   async def start(self, hoyo):
     if not self.data.id in self.score:
         await self.update_score(self.data.id)
         self.score = open_score("score")
