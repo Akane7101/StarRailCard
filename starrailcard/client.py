@@ -415,38 +415,45 @@ class Card:
         }
                 
         async with anyio.create_task_group() as tasks:
-            
-            for key in data.characters:
-                async def get_result(key):    
-                    try:               
-                        response["character_id"].append(key.id)
-                        response["character_name"].append(key.name)
+    for key in data.characters:
+        async def get_result(key):    
+            try:               
+                response["character_id"].append(key.id)
+                response["character_name"].append(key.name)
+                
+                if self.character_id:
+                    if not str(key.id) in self.character_id:
+                        return  
+                
+                if self.color:
+                    color = self.color.get(str(key.id))
+                else:
+                    color = None
+                
+                art = None
+                if self.character_art:
+                    if str(key.id) in self.character_art:
+                        art = self.character_art[str(key.id)]
                         
-                        if self.character_id:
-                            if not str(key.id) in self.character_id:
-                                return  
-                        
-                        if self.color:
-                            color = self.color.get(str(key.id))
-                        else:
-                            color = None
-                        
-                        art = None
-                        if self.character_art:
-                            if str(key.id) in self.character_art:
-                                art = self.character_art[str(key.id)]
-                        if style == 1:
-                            result.append(await style_relict_score.Create(key,self.translateLang,art,hide_uid,uid, self.seeleland,self.remove_logo, color).start())
-                        elif style == 2:
-                            result.append(await style_ticket.Create(key,self.translateLang,art,hide_uid,uid, self.seeleland,self.remove_logo, color).start())
-                        elif style == 3:
-                            result.append(await style_card.Create(key,self.translateLang,art,hide_uid,uid, self.seeleland,self.remove_logo, color).start())
-                    except Exception as e:
-                        print(f"Error in get_result for character {key.id}: {e}")
-                        
-                tasks.start_soon(get_result, key)
-                    
-        response["card"] = result
+                if style == 1:
+                    result.append(await style_relict_score.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
+                elif style == 2:
+                    result.append(await style_ticket.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
+                elif style == 3:
+                    result.append(await style_card.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
+            except Exception as e:
+                print(f"Error in get_result for character {key.id}: {e}")
+                # Append a placeholder or partial result to avoid breaking the flow
+                result.append({
+                    "character_id": key.id,
+                    "error": str(e),
+                    "message": "Failed to generate card"
+                })
+                
+        tasks.start_soon(get_result, key)
+
+response["card"] = result
+
         
         if self.lang == "ua":
             StarRailCard.UA_LANG = True
