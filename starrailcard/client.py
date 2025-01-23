@@ -400,59 +400,56 @@ class Card:
             player = data.player
         
         response = {
-            "settings": {
-                "uid": int(uid),
-                "lang": self.lang,
-                "hide_uid": hide_uid,
-                "save": self.save,
-                "force_update": force_update,
-                "style": int(style)
-            },
-            "player": player,
-            "card": None,
-            "character_name": [],
-            "character_id": [],
-        }
-                
-        async with anyio.create_task_group() as tasks:
-    for key in data.characters:
-        async def get_result(key):    
-            try:               
+    "settings": {
+        "uid": int(uid),
+        "lang": self.lang,
+        "hide_uid": hide_uid,
+        "save": self.save,
+        "force_update": force_update,
+        "style": int(style)
+    },
+    "player": player,
+    "card": None,
+    "character_name": [],
+    "character_id": [],
+}
+
+result = []  # Initialize the result list
+
+async with anyio.create_task_group() as tasks:
+    for key in data.characters:  # This must be indented under the `async with` block
+        async def get_result(key):
+            try:
                 response["character_id"].append(key.id)
                 response["character_name"].append(key.name)
-                
-                if self.character_id:
-                    if not str(key.id) in self.character_id:
-                        return  
-                
-                if self.color:
-                    color = self.color.get(str(key.id))
-                else:
-                    color = None
-                
-                art = None
-                if self.character_art:
-                    if str(key.id) in self.character_art:
-                        art = self.character_art[str(key.id)]
-                        
-                if style == 1:
-                    result.append(await style_relict_score.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
-                elif style == 2:
-                    result.append(await style_ticket.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
-                elif style == 3:
-                    result.append(await style_card.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
+
+                if self.character_id and str(key.id) not in self.character_id:
+                    return  
+
+                color = self.color.get(str(key.id)) if self.color else None
+                art = self.character_art.get(str(key.id)) if self.character_art and str(key.id) in self.character_art else None
+
+                # Determine the style and handle exceptions for each style separately
+                try:
+                    if style == 1:
+                        result.append(await style_relict_score.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
+                    elif style == 2:
+                        result.append(await style_ticket.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
+                    elif style == 3:
+                        result.append(await style_card.Create(key, self.translateLang, art, hide_uid, uid, self.seeleland, self.remove_logo, color).start())
+                except Exception as inner_error:
+                    print(f"Error while processing style for character {key.id}: {inner_error}")
+                    # Add a placeholder in case of error
+                    result.append({"character_id": key.id, "error": str(inner_error)})
             except Exception as e:
                 print(f"Error in get_result for character {key.id}: {e}")
-                # Append a placeholder or partial result to avoid breaking the flow
-                result.append({
-                    "character_id": key.id,
-                    "error": str(e),
-                    "message": "Failed to generate card"
-                })
-                
+                # Optionally log or append a placeholder to `response` or `result`
+                result.append({"character_id": key.id, "error": str(e)})
+
         tasks.start_soon(get_result, key)
 
-response["card"] = result
+        response["card"] = result
+
 
         
         if self.lang == "ua":
