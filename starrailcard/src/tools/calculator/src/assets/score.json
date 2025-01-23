@@ -3575,11 +3575,11 @@
                 "WindAddedRatio": 0
             },
             "6": {
-                "AttackAddedRatio": 0,
+                "AttackAddedRatio": 1,
                 "BreakDamageAddedRatioBase": 0,
                 "DefenceAddedRatio": 0,
                 "HPAddedRatio": 0,
-                "SPRatioBase": 0
+                "SPRatioBase": 1
             }
         },
         "max": 0,
