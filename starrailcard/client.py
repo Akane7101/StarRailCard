@@ -171,7 +171,7 @@ class HoYoCard:
                             result.append(await style_card.Create(key,self.translateLang,art,hide_uid,uid, self.seeleland,self.remove_logo, color).start(hoyo = True))
                     except Exception as e:
                         print(f"Error in get_result for character {key.id}: {e}")
-                        result.append({"character_id": key.id, "error": str(e)})
+                        
                 tasks.start_soon(get_result, key)
                     
         response["card"] = result
@@ -443,7 +443,7 @@ class Card:
                             result.append(await style_card.Create(key,self.translateLang,art,hide_uid,uid, self.seeleland,self.remove_logo, color).start())
                     except Exception as e:
                         print(f"Error in get_result for character {key.id}: {e}")
-                        result.append({"character_id": key.id, "error": str(e)})
+                        
                 tasks.start_soon(get_result, key)
                     
         response["card"] = result
@@ -542,7 +542,7 @@ class Card:
                             result.append(await style_card.Create(key,self.translateLang,art,hide_uid,uid, self.seeleland,self.remove_logo, color).start(build= key.build))
                     except Exception as e:
                         print(f"Error in get_result for character {key.id}: {e}")
-                        result.append({"character_id": key.id, "error": str(e)})
+                        
                 tasks.start_soon(get_result, key)
                     
         response["card"] = result
